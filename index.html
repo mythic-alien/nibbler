@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b20" />
+  <meta name="description" content="Nibbler by Breachbyte — inspect protocol packets and compare fields." />
+  <title>Nibbler | Breachbyte</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./themes.css" />
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="https://breachbyte.com/" aria-label="Nibbler by Breachbyte — home">
+      <span class="brand-symbol" aria-hidden="true"><span class="brand-mark">N<span class="brand-mark-cut">/</span></span></span>
+      <span class="brand-text"><span class="brand-name">Nibbler<span class="brand-dot">.</span></span><span class="brand-caption">PACKET EXPLORER</span></span>
+    </a>
+    <div class="topbar-actions">
+      <div class="theme-control"><label for="themeSelect">THEME</label><div class="theme-picker"><span class="theme-preview" aria-hidden="true"></span><select id="themeSelect" aria-label="Visual theme"><option value="modern">Modern · Material 3</option><option value="contrast">High contrast</option><option value="light">Light</option><option value="dark">Dark</option><option value="y2k">Y2K futurism</option><option value="aero">Frutiger Aero</option><option value="glass">Glass</option><option value="saturated">Saturated</option></select></div></div>
+      <button class="icon-button" id="openBtn" title="Open .nibbler.json (Ctrl+O)" aria-label="Open project"><svg viewBox="0 0 24 24"><path d="M4 17.5V6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v2M4 17.5l3-8h14l-3 9H6a2 2 0 0 1-2-1Z"/></svg></button>
+      <button class="action-button" id="saveBtn" title="Download .nibbler.json (Ctrl+S)" aria-label="Save project"><svg viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 17v3h16v-3"/></svg><span>Save project</span></button>
+      <input type="file" id="fileOpen" hidden accept=".json,.nibbler.json,application/json" />
+    </div>
+  </header>
+  <main class="content">
+    <section class="heading" aria-label="Breachbyte workspace">
+      <div class="eyebrow">
+        <span class="eyebrow-index">01 /</span>PACKET EXPLORATION<span class="version">breachbyte.com</span></div>
+    </section>
+
+    <section class="controls-surface" aria-label="Packet analysis settings">
+      <div class="control-field"><label for="formatSelect">PACKET FORMAT</label><div class="select-wrap"><select id="formatSelect"><option>Hex</option><option>Binary</option><option>ASCII</option><option>Plain Text</option><option>Decimal</option></select></div></div>
+      <div class="control-field delimiter-field"><label for="delimiterInput">PACKET DELIMITER <span class="label-help" title="Blank or \n means one packet per line. Enter a literal separator such as , or , followed by a space. Pasted text is split into separate editable packet rows.">?</span></label><input id="delimiterInput" type="text" value="" spellcheck="false" autocomplete="off" placeholder="\n" aria-describedby="delimiterHelp" maxlength="80" /><span class="control-explain" id="delimiterHelp">Blank or \n = new line</span></div>
+      <div class="control-divider"></div>
+      <div class="control-field"><span class="control-label" title="Aligned: same column in every row. Anywhere: match the field wherever it appears.">FIND MATCHES <span class="label-help" title="Aligned compares the same field offset on every packet. Anywhere searches the entire packet.">?</span></span><div class="segmented" id="matchSegment" role="group" aria-label="Matching mode"><button class="segment active" data-mode="Aligned" aria-pressed="true">Aligned</button><button class="segment" data-mode="Anywhere" aria-pressed="false">Anywhere</button></div></div>
+      <div class="control-divider"></div>
+      <div class="control-field control-small"><label for="minWidth">IGNORE SHORT RUNS <span class="label-help" title="Only affects automatic analysis below. Shorter runs of identical or changing bits are omitted. Manual field selection is unaffected.">?</span></label><div class="number-wrap"><input id="minWidth" type="number" min="1" max="128" value="2" aria-describedby="minHelp" /><span>min. bits</span></div><span class="control-explain" id="minHelp">Automatic analysis only</span></div>
+      <div class="control-divider"></div>
+      <div class="control-field control-grow"><label for="variableSelect">GROUP CHANGING BITS <span class="label-help" title="Split: separate adjacent bits that change differently across packets. Merge: treat every consecutive run of changing bits as one field.">?</span></label><div class="select-wrap"><select id="variableSelect"><option value="Split by change pattern">Separate by behaviour</option><option value="Merge adjacent changing bits">Keep adjacent bits together</option></select></div><span class="control-explain">How the bit comparison divides variable fields</span></div>
+      <button class="text-action" id="loadDemo" title="Insert demonstration packets">Load sample packets <span aria-hidden="true">↗</span></button>
+    </section>
+
+    <div class="workbench">
+      <section class="editor-card" aria-label="Editable packet canvas">
+        <div class="card-top">
+          <div class="card-title-stack"><div class="card-overline"><span class="status-orb"></span> EDITOR / 01</div><h2>Packet canvas</h2><p>Paste one packet per line. Drag within a row to preview a field; drag its colour to reposition.</p></div>
+          <div class="counts"><span class="count-pill"><strong id="packetCount">0</strong> packets</span><span class="count-pill"><strong id="groupCount">0</strong> groups</span></div>
+        </div>
+        <div class="editor-ruler"><span class="ruler-gutter">ROW</span><div class="ruler-column"><span class="ruler-label" id="rulerTitle">COLUMN OFFSETS · 0-BASED</span><div class="ruler-ticks" id="rulerTicks" aria-hidden="true"></div></div></div>
+        <div class="editor-stage" id="editorStage">
+          <div class="gutter" id="gutter" aria-label="Drag rows to reorder"><div class="gutter-items" id="gutterItems"></div><div id="dropLine" class="drop-line" hidden><span></span></div></div>
+          <div class="editor-textbox" id="textBox">
+            <textarea id="packetInput" aria-label="Paste packet values, one per line" spellcheck="false" wrap="off" autocomplete="off" autocapitalize="off" placeholder="Paste packets here…&#10;Use the delimiter above to split pasted packets into rows.&#10;Drag a field and right-click to save it."></textarea>
+            <div class="field-layer" id="fieldLayer" aria-hidden="true"></div>
+            <div class="reorder-layer" id="reorderLayer" hidden aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="editor-bottom"><div class="editor-hint"><span class="shortcut">ESC</span> cancel field <span class="hint-dot">·</span> <span class="shortcut">SHIFT</span> + drag select text <span class="hint-dot">·</span> <span class="shortcut">⋮⋮</span> reorder rows</div></div>
+      </section>
+
+      <aside class="right-rail" aria-label="Field insights and groups">
+        <section class="lens-card">
+          <div class="rail-overline">FIELD PREVIEW <span class="orbit-glyph">↔</span></div>
+          <div class="lens-main"><div class="lens-icon" id="lensIcon"><span id="lensGlyph">⌁</span></div><div><p id="lensState" class="lens-state">Ready to discover</p><h3 id="lensLabel">Select a field</h3><p id="lensDescription" class="lens-description">Drag over a sequence to see where it repeats.</p></div></div>
+          <div class="lens-metrics"><div><span>SELECTION WIDTH</span><strong id="fieldWidth">—</strong></div><div><span>OFFSET</span><strong id="fieldOffset">—</strong></div><div><span>MATCHES</span><strong id="matchCount">—</strong></div></div>
+          <div class="lens-help" id="lensHelp">Selections are temporary until you choose <b>Save as group</b> from the right-click menu.</div>
+        </section>
+        <section class="groups-card">
+          <div class="rail-section-heading"><div><div class="rail-overline">SAVED BY YOU</div><h3>Field groups</h3></div><span class="tiny-counter" id="groupNumber">00</span></div>
+          <div class="groups-list" id="groupsList"><div class="empty-groups"><div class="empty-art">◫</div><strong>No saved fields</strong><span>Right-click a selection and choose Save as group.</span></div></div>
+        </section>
+        <section class="insights-card">
+          <div class="rail-section-heading"><div><div class="rail-overline">ACROSS ALL PACKETS</div><h3>Packet comparison</h3></div><span class="insight-badge" id="analysisState">IDLE</span></div>
+          <div class="comparison-unit" id="comparisonUnit">BYTES · HEX</div>
+          <div class="insight-summary"><div><span class="legend stable"></span> Unchanged <span id="stableUnitLabel">bytes</span> <strong id="stableCount">0</strong></div><div><span class="legend variable"></span> Changing <span id="variableUnitLabel">bytes</span> <strong id="variableCount">0</strong></div></div>
+          <div class="bit-track unit-track" id="bitTrack" aria-label="Packet comparison by display format"></div>
+          <div class="insight-note" id="insightNote">Paste at least two packets to compare their values.</div>
+          <div class="comparison-detail-label">BIT-LEVEL FIELD RUNS <span title="These are underlying bit positions, even when the overview shows hexadecimal bytes.">ⓘ</span></div>
+          <div class="field-results" id="fieldResults"></div>
+        </section>
+      </aside>
+    </div>
+    <footer class="footnote"><span class="footer-home" aria-hidden="true"></span><span>© <span id="copyrightYear">2026</span> Breachbyte. All rights reserved.</span></footer>
+  </main>
+</div>
+<div class="context-menu" id="contextMenu" hidden role="menu"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="convertDialog" class="modal-backdrop" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="convertTitle"><div class="rail-overline">FIELD CONVERSION</div><h2 id="convertTitle">As hexadecimal</h2><div class="conversion-result" id="conversionResult"></div><p>Read-only preview. Your original packet remains unchanged.</p><div class="dialog-actions"><button id="closeConvert" class="soft-button">Close</button><button id="copyConvert" class="action-button">Copy value</button></div></div></div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
