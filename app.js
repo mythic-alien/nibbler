@@ -381,11 +381,14 @@ function beginCanvasSelection(e){
     candidate=null;editingId=null;selectionLocked=false;nativeSelectMode=true;
     scheduleRender();return;
   }
-  e.preventDefault();hideMenu();
+  hideMenu();
   const line=pointerLine(e), ls=rows();
   if(!ls[line] || !lineSymbols(ls[line],format()).positions.length){
+    // Let the browser focus and position its caret on empty packet rows.
+    // Preventing pointerdown here leaves a fresh, empty editor unfocused.
     candidate=null;editingId=null;scheduleRender();return;
   }
+  e.preventDefault();
   const anchor=getNearestSymbolAtX(e.clientX,line);
   // Exact caret position for text editing, separate from the nibble boundary.
   const rect=ui.box.getBoundingClientRect();
